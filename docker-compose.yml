@@ -1,0 +1,47 @@
+version: '3'
+
+services:
+    web:
+        build:
+            context: ./docker/nginx
+        ports:
+            - "8080:80"
+        volumes:
+            - ./src:/code
+            - ./docker/nginx/site.conf:/etc/nginx/conf.d/default.conf
+        networks:
+            - code-network
+    php:
+        build:
+            context: ./docker/php-fpm
+        volumes:
+            - ./src:/code
+        networks:
+            - code-network
+    database:
+        build:
+            context: ./docker/database
+        environment:
+            - MYSQL_DATABASE=mydb
+            - MYSQL_USER=myuser
+            - MYSQL_PASSWORD=secret
+            - MYSQL_ROOT_PASSWORD=docker
+        volumes:
+            - ./docker/database/data:/var/lib/mysql
+        networks:
+            - code-network
+    adminer:
+        image: adminer
+        environment:
+            ADMINER_DEFAULT_DB_DRIVER: mysql
+            ADMINER_DEFAULT_DB_HOST: database
+            ADMINER_DEFAULT_DB_NAME: mydb
+            ADMINER_DESIGN: nette
+            ADMINER_PLUGINS: tables-filter tinymce
+        networks:
+            - code-network
+        ports:
+        - 8081:8080
+networks:
+    code-network:
+        driver: bridge
